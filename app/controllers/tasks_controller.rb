@@ -1,11 +1,14 @@
 class TasksController < ApplicationController
+  before_action :require_user_logged_in
+  before_action :correct_user, only: [:show, :edit, :update, :destroy]
   before_action :set_task, only: [:show, :edit, :update, :destroy]
   
   def index
-    @tasks = Task.all
+    @tasks = current_user.tasks.all
   end
   
   def show
+    @task = Task.find(params[:id])
   end
   
   def new
@@ -13,26 +16,27 @@ class TasksController < ApplicationController
   end
 
   def create
-    @task = Task.new(task_params)
+    @task = current_user.tasks.build(task_params)
 
     if @task.save
-      flash[:success] = 'Task が正常に登録されました'
-      redirect_to @task
+      flash[:success] = 'タスク が正常に登録されました'
+      redirect_to tasks_url
     else
-      flash.now[:danger] = 'Task が登録されませんでした'
-      render :new
+      flash.now[:danger] = 'タスク が登録されませんでした'
+      render 'toppages/new'
     end
   end
 
   def edit
+    @task = Task.find(params[:id])
   end
 
   def update
     if @task.update(task_params)
-      flash[:success] = 'Task は正常に更新されました'
-      redirect_to @task
+      flash[:success] = 'タスク は正常に更新されました'
+      redirect_to tasks_url
     else
-      flash.now[:danger] = 'Task は更新されませんでした'
+      flash.now[:danger] = 'タスク は更新されませんでした'
       render :edit
     end
   end
@@ -40,7 +44,7 @@ class TasksController < ApplicationController
   def destroy
     @task.destroy
 
-    flash[:success] = 'Task は正常に削除されました'
+    flash[:success] = 'タスク は正常に削除されました'
     redirect_to tasks_url
   end
   
@@ -56,4 +60,10 @@ class TasksController < ApplicationController
     params.require(:task).permit(:content, :status)
   end
 
+  def correct_user
+    @task = current_user.tasks.find_by(id: params[:id])
+    unless @task
+      redirect_to root_path
+    end
+  end
 end
